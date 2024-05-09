@@ -8,3 +8,4 @@ numpy==1.26.4
 scipy==1.13.0
 Werkzeug==3.0.3
 xgboost==2.0.3
+gunicorn==22.0.0
