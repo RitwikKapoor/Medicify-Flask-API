@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 import pickle
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 with open('insurance.pkl', 'rb') as file:
     model = pickle.load(file)
@@ -14,22 +16,24 @@ region_map = {'northwest': 0, 'northeast': 1, 'southeast': 2, 'southwest': 3}
 def hello():
     return "Hello World!"
 
-@app.route('/predict_premium', methods=['POST'])
-def predict():
+@app.route('/api/predict_premium', methods=['POST'])
+def predict_premium():
     data = request.get_json()
+    if any(value is None or value == '' for value in data.values()):
+        return jsonify({'msg': 'All fields are required'}), 400
 
-    age = data['age']
-    sex = sex_map[data['sex']]
-    bmi = data['bmi']
-    children = data['children']
-    smoker = smoker_map[data['smoker']]
-    region = region_map[data['region']]
+    age = int(data.get('age', 0))
+    sex = sex_map.get(data.get('sex'))
+    smoker = smoker_map.get(data.get('smoker'))
+    region = region_map.get(data.get('region'))
+    bmi = float(data.get('bmi', 0.0))
+    children = int(data.get('children', 0))
 
     prediction = model.predict([[age, sex, bmi, children, smoker, region]])
 
     prediction_value = float(prediction[0])
-
-    return jsonify({'prediction': prediction_value})
+    return jsonify({'prediction': prediction_value}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
+
